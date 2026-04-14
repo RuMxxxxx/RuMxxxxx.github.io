@@ -1,2 +1,826 @@
-hello World
- test 3
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私享行程及目的地场地介绍</title>
+    <style>
+        /* ======================================
+           全局重置 + 轻奢固定配色
+        ====================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        :root {
+            --main-green: #1A4D2E;
+            --gold: #D4B16A;
+            --bg: #f8f7f5;
+            --text: #333;
+            --sub-text: #666;
+            --white: #fff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            animation: pageFade 1s ease;
+            padding-bottom: 80px;
+            /* 预留底部固定按钮空间 */
+            overflow-x: hidden;
+            /* 隐藏高尔夫球滚动溢出 */
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* ======================================
+           顶部主题区域（高尔夫背景）
+        ====================================== */
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+            background: linear-gradient(rgba(26, 77, 46, 0.85), rgba(26, 77, 46, 0.8)),
+                url('/src/headerGolf.jpg') center/cover no-repeat;
+            color: var(--white);
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .golf-animation {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 1rem;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23D4B16A"><path d="M12 2L9 9h6l-3-7zm0 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>') no-repeat center;
+            animation: swing 2s infinite ease-in-out;
+        }
+
+        @keyframes swing {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            50% {
+                transform: rotate(-20deg);
+            }
+        }
+
+        .hero h1 {
+            font-size: 2.4rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+
+        /* ======================================
+           高尔夫球滚动动画（新增：大图与行程之间）
+        ====================================== */
+        .golf-roll-container {
+            width: 100%;
+            height: 40px;
+            position: relative;
+            margin: 1rem 0 2rem;
+            overflow: hidden;
+        }
+
+        .golf-ball {
+            width: 24px;
+            height: 24px;
+            background: var(--white);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            left: -30px;
+            top: 8px;
+            animation: golfRoll 4s ease 1s forwards;
+            /* 延迟1秒滚动 */
+            z-index: 2;
+        }
+
+        .golf-ball::before {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--main-green);
+            border-radius: 50%;
+            top: 4px;
+            left: 4px;
+        }
+
+        .golf-ball::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 1px dashed var(--gold);
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        /* 滚动轨迹：渐变消失虚线 */
+        .golf-trail {
+            position: absolute;
+            left: 0;
+            top: 20px;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+            clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+            animation: trailDraw 4s ease 1s forwards;
+        }
+
+        @keyframes golfRoll {
+            0% {
+                left: -30px;
+                transform: rotate(0deg);
+            }
+
+            90% {
+                left: calc(100% + 30px);
+                transform: rotate(720deg);
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes trailDraw {
+            0% {
+                clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+            }
+
+            80% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* ======================================
+           通用标题样式
+        ====================================== */
+        .section-title {
+            text-align: center;
+            margin: 1rem 0 2rem;
+            font-size: 1.9rem;
+            color: var(--main-green);
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: var(--gold);
+            margin: 0.8rem auto;
+            border-radius: 3px;
+        }
+
+        /* ======================================
+           通用卡片 + 标签切换样式
+        ====================================== */
+        .module-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06);
+            margin-bottom: 3.5rem;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            padding: 0.9rem 1.4rem;
+            border: none;
+            background: transparent;
+            color: var(--sub-text);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            background: var(--main-green);
+            color: var(--white);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--main-green);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ======================================
+           行程列表样式（完整LIST+图标）
+        ====================================== */
+        .itinerary-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .itinerary-list li {
+            padding: 1rem 1.2rem;
+            border-left: 3px solid var(--gold);
+            margin-bottom: 0.8rem;
+            background: #fdfdfb;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+        }
+
+        .icon {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* ======================================
+           Additional Information 模块
+        ====================================== */
+        .info-list {
+            list-style: disc;
+            padding-left: 1.5rem;
+            line-height: 2;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .info-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* ======================================
+           场地详情样式
+        ====================================== */
+        .venue-img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .venue-img:hover {
+            transform: scale(1.02);
+        }
+
+        .venue-title {
+            color: var(--main-green);
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 场地核心特色：LIST + 全大写 */
+        .venue-feature-list {
+            list-style: none;
+            background: #f0ebe4;
+            padding: 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .venue-feature-list li {
+            color: var(--main-green);
+            font-weight: 600;
+            text-transform: uppercase;
+            /* 大写 */
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+            position: relative;
+        }
+
+        .venue-feature-list li:before {
+            content: "⛳";
+            margin-right: 8px;
+            color: var(--gold);
+        }
+
+        /* 场地段落标题 */
+        .desc-title {
+            color: var(--main-green);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.8rem;
+            border-left: 3px solid var(--gold);
+            padding-left: 0.8rem;
+        }
+
+        /* 场地详情段落 */
+        .venue-desc {
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        /* ======================================
+           标语 + 固定底部注册按钮
+        ====================================== */
+        .cta-section {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .cta-slogan {
+            font-size: 1.8rem;
+            color: var(--main-green);
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        /* 固定底部按钮 */
+        .fixed-register-btn {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background: var(--main-green);
+            color: var(--white);
+            border: none;
+            border-radius: 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 99;
+        }
+
+        .fixed-register-btn:hover {
+            background: #143a22;
+            color: var(--gold);
+        }
+
+        /* ======================================
+           图片双击放大弹窗
+        ====================================== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 8px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+        }
+
+        /* ======================================
+           版权 + 动画
+        ====================================== */
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--sub-text);
+            font-size: 0.95rem;
+            border-top: 1px solid #eee;
+            margin-top: 3rem;
+        }
+
+        @keyframes pageFade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ======================================
+           响应式适配
+        ====================================== */
+        @media (max-width: 1024px) {
+            .venue-img {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .module-card {
+                padding: 1.5rem;
+            }
+
+            .tab-btn {
+                padding: 0.7rem 1rem;
+            }
+
+            .venue-img {
+                height: 260px;
+            }
+
+            .cta-slogan {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 顶部高尔夫主题区域 -->
+        <div class="hero">
+            <div class="golf-animation"></div>
+            <h1>7-Day Exclusive Golf & City Tour</h1>
+            <p>Guangzhou & Shenzhen Luxury Travel Itinerary</p>
+        </div>
+
+        <!-- 新增：高尔夫球滚动动画容器 -->
+        <div class="golf-roll-container">
+            <div class="golf-ball"></div>
+            <div class="golf-trail"></div>
+        </div>
+
+        <!-- ======================
+             1. 7天行程（完整LIST+图标）
+        ====================== -->
+        <h2 class="section-title">Travel Itinerary</h2>
+        <div class="module-card">
+            <div class="tabs">
+                <button class="tab-btn active" data-target="day1">Day 1</button>
+                <button class="tab-btn" data-target="day2">Day 2</button>
+                <button class="tab-btn" data-target="day3">Day 3</button>
+                <button class="tab-btn" data-target="day4">Day 4</button>
+                <button class="tab-btn" data-target="day5">Day 5</button>
+                <button class="tab-btn" data-target="day6">Day 6</button>
+                <button class="tab-btn" data-target="day7">Day 7</button>
+            </div>
+
+            <!-- Day1 -->
+            <div class="tab-content active" id="day1">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🕔</span> 5:00 PM - Landing at Guangzhou Baiyun International Airport</li>
+                    <li><span class="icon">🏨</span> Check in at the designated luxury hotel</li>
+                    <li><span class="icon">🍽️</span> Enjoy hotel buffet dinner</li>
+                    <li><span class="icon">⏳</span> Free time for rest and relaxation</li>
+                </ul>
+            </div>
+
+            <!-- Day2 -->
+            <div class="tab-content" id="day2">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🍽️</span> Breakfast at the hotel</li>
+                    <li><span class="icon">⛳</span> Golf round at Guangzhou Fengshen Golf Club - Pete Dye Course</li>
+                    <li><span class="icon">🍽️</span> Lunch after freshening up</li>
+                    <li><span class="icon">🚗</span> Transfer to Guangzhou Nansha Golf Club (2 hours)</li>
+                    <li><span class="icon">🏯</span> Visit Nansha Tianhou Palace</li>
+                    <li><span class="icon">🏌️</span> Driving range practice</li>
+                    <li><span class="icon">🍽️</span> Dinner & Check in at the Villa Hotel</li>
+                </ul>
+            </div>
+
+            <!-- Day3 -->
+            <div class="tab-content" id="day3">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🍽️</span> Breakfast at the hotel</li>
+                    <li><span class="icon">⛳</span> Golf round at Guangzhou Nansha Golf Club (Lake Course)</li>
+                    <li><span class="icon">🍽️</span> Lunch at the club & Check out</li>
+                    <li><span class="icon">🚗</span> Transfer to Shenzhen (2 hours)</li>
+                    <li><span class="icon">🌉</span> Visit Shenzhen‑Zhongshan Link</li>
+                    <li><span class="icon">🌿</span> Shenzhen Bay Park Mangrove Reserve</li>
+                    <li><span class="icon">🌃</span> Happy Harbor Night View & DJI Store</li>
+                    <li><span class="icon">🏨</span> Check in at Shenzhen hotel</li>
+                </ul>
+            </div>
+
+            <!-- Day4 完整列表+图标（修改） -->
+            <div class="tab-content" id="day4">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🍽️</span> Breakfast at the hotel</li>
+                    <li><span class="icon">🏛️</span> Visit Shenzhen Museum of Contemporary Art</li>
+                    <li><span class="icon">🍽️</span> Lunch at local specialty restaurant</li>
+                    <li><span class="icon">🏔️</span> Lotus Hill Park & Citizen Square</li>
+                    <li><span class="icon">🍽️</span> Dinner at the golf club</li>
+                    <li><span class="icon">⛳</span> Night Golf at Shenzhen Mingshang Golf Club</li>
+                    <li><span class="icon">🏨</span> Return to the hotel</li>
+                </ul>
+            </div>
+
+            <!-- Day5 完整列表+图标（修改） -->
+            <div class="tab-content" id="day5">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🍽️</span> Breakfast at the hotel</li>
+                    <li><span class="icon">🛍️</span> Visit Huaqiangbei Electronics World</li>
+                    <li><span class="icon">🛒</span> Dongmen Pedestrian Street shopping</li>
+                    <li><span class="icon">🍽️</span> Lunch at featured restaurant</li>
+                    <li><span class="icon">🚗</span> Transfer back to Guangzhou (2.5 hours)</li>
+                    <li><span class="icon">🚢</span> Pearl River Night Cruise</li>
+                    <li><span class="icon">🍽️</span> Dinner & Return to hotel</li>
+                </ul>
+            </div>
+
+            <!-- Day6 完整列表+图标（修改） -->
+            <div class="tab-content" id="day6">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🍽️</span> Breakfast at the hotel</li>
+                    <li><span class="icon">🏯</span> Visit Chen Clan Ancestral Hall</li>
+                    <li><span class="icon">🏘️</span> Yongqing Fang Cultural Block</li>
+                    <li><span class="icon">🍽️</span> Lunch at Lingnan style restaurant</li>
+                    <li><span class="icon">🛍️</span> Shangxiajiu Pedestrian Street</li>
+                    <li><span class="icon">🌃</span> Flower City Square & Haixinsha Island</li>
+                    <li><span class="icon">🗼</span> Canton Tower Night Tour</li>
+                    <li><span class="icon">🏨</span> Return to the hotel</li>
+                </ul>
+            </div>
+
+            <!-- Day7 完整列表+图标（修改） -->
+            <div class="tab-content" id="day7">
+                <ul class="itinerary-list">
+                    <li><span class="icon">🍽️</span> Breakfast at the hotel</li>
+                    <li><span class="icon">🛍️</span> Beijing Road Pedestrian Street</li>
+                    <li><span class="icon">🍽️</span> Lunch at popular restaurant</li>
+                    <li><span class="icon">🏬</span> Grandview Mall shopping</li>
+                    <li><span class="icon">🚗</span> Transfer to Guangzhou Airport</li>
+                    <li><span class="icon">✈️</span> Departure & End of the tour</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ======================
+             2. Additional Information
+        ====================== -->
+        <h2 class="section-title">Additional Information</h2>
+        <div class="module-card">
+            <ul class="info-list">
+                <li>1</li>
+                <li>1</li>
+                <li>1</li>
+                <li>1</li>
+                <li>1</li>
+                <li>1</li>
+                <li>1</li>
+            </ul>
+        </div>
+
+        <!-- ======================
+             3. 高尔夫场地（标签切换）
+        ====================== -->
+        <h2 class="section-title">Golf Venues</h2>
+        <div class="module-card">
+            <div class="tabs">
+                <button class="tab-btn active" data-target="venue1">Fengshen Golf</button>
+                <button class="tab-btn" data-target="venue2">Nansha Golf</button>
+                <button class="tab-btn" data-target="venue3">Noble Merchant Golf</button>
+            </div>
+
+            <!-- 场地1 -->
+            <div class="tab-content active" id="venue1">
+                <h3 class="venue-title">Guangzhou Fengshen Golf Club – Dye Course</h3>
+                <img src="/src/petedye.png" class="venue-img" ondblclick="openModal(this)"
+                    alt="Fengshen Golf">
+
+                <ul class="venue-feature-list">
+                    <li>18-HOLE PRIVATE MOUNTAIN COURSE</li>
+                    <li>PETE DYE FAMILY DESIGN</li>
+                    <li>HAWAII PLATINUM GRASS GREENS</li>
+                    <li>8500 SQ.M LUXURY CLUBHOUSE</li>
+                </ul>
+
+                <h4 class="desc-title">Course Overview</h4>
+                <p class="venue-desc">The Dye Course is an ingeniously crafted and delightfully challenging mountain
+                    course, designed by the renowned Pete Dye family of the United States, often hailed as the "uncanny
+                    master" of golf course design. The lead architect, Cynthia Dye, has deeply captured the essence of
+                    the Dye design style. Opened in 2009, the course features 18 holes, a par of 72, a total length of
+                    6,680 yards, a course rating of 72.2, and a slope rating of 138.As a private course for Fengshen
+                    members, the designer fully considered the harmonious coexistence of the undulating natural mountain
+                    scenery and the fairways during the design and construction process, embodying a sense of softness
+                    and elegance.
+                </p>
+
+                <h4 class="desc-title">Design Philosophy</h4>
+                <p class="venue-desc">The course carries forward the Dye family's signature style of "determining the
+                    fairway by the green," infusing each hole with feminine softness and the playful spirit of the game.
+                    The bunkers are exquisitely crafted, like mischievous little sprites that conceal hidden dangers,
+                    ready to tease golfers at any moment.The greens are planted with Hawaii Platinum Grass, and the
+                    fairways feature Hawaii Grass, ensuring exceptional quality.While the overall distance is not
+                    extremely long, the fairways are narrow, requiring golfers to carefully strategize their shots,
+                    making it an ideal course for beginner to intermediate players seeking improvement.</p>
+
+                <h4 class="desc-title">Clubhouse & Facilities</h4>
+                <p class="venue-desc">The club features an 8,500-square-meter New Asian-style golf clubhouse designed by
+                    the world-renowned KTGY firm. The saddle-shaped roof, which slopes down from front to back, creates
+                    a striking visual impact, while the extensive use of glass curtain walls allows ample natural light
+                    in all functional areas, reflecting a strong commitment to low-carbon environmental awareness. The
+                    lobby lounge, restaurant, locker area, and banquet hall all offer 270-degree views of the
+                    course.Additionally, the club boasts a nearly 2,000-square-meter putting green, a chipping practice
+                    area featuring various slopes and bunker types, and the Fengshen Golf Academy, equipped with
+                    world-leading technological training facilities.</p>
+            </div>
+
+            <!-- 场地2 -->
+            <div class="tab-content" id="venue2">
+                <h3 class="venue-title">Guangzhou Nansha Golf Club – Lake Course</h3>
+                <img src="/src/nanshang.png" class="venue-img" ondblclick="openModal(this)"
+                    alt="Nansha Golf">
+
+                <ul class="venue-feature-list">
+                    <li>LAKESIDE ECOLOGICAL COURSE</li>
+                    <li>9-HOLE LIGHTED NIGHT GOLF</li>
+                    <li>SEASIDE LOCATION IN NANSHA</li>
+                    <li>LUXURY VILLA ACCOMMODATION</li>
+                </ul>
+
+                <h4 class="desc-title">Course Overview</h4>
+                <p class="venue-desc">Guangzhou Nansha Golf Club is nestled within the ecological green landscape of
+                    Nansha District, Guangzhou. It was master-planned under the visionary leadership of patriotic
+                    entrepreneur Sir Henry Fok, embodying the ambition to create a 21st-century seaside new town.The
+                    club was designed by John Jacobs and officially opened in 1997.The Lake Course (also known as Luwan
+                    Course) is located in the valley flatlands, with fairways extending westward along the hillside. It
+                    stretches 6,626 yards and has a par of 72.Thanks to the distinctive terrain, the fairways feature
+                    undulating contours and abundant variety, offering rich and enjoyable play.</p>
+
+                <h4 class="desc-title">Design Philosophy</h4>
+                <p class="venue-desc">The course is built along the mountains, offering an excellent natural
+                    environment. The back 18 holes (Huangshanlu Course) are located to the north of the valley,
+                    generally situated at higher elevations.The course follows the route of a high-end resort and
+                    private club — bunkers are not overly deep, and the difficulty is not as demanding as
+                    tournament-style courses. However, because the fairways stretch toward the mountains and are mostly
+                    uneven, the course inherently presents a certain level of challenge, which is where its appeal
+                    lies.Notably, the par-4 11th hole features a fairway built on an artificial island, offering
+                    opportunities to land in the water whether teeing off or approaching the green — a truly treacherous
+                    challenge.</p>
+
+                <h4 class="desc-title">Clubhouse & Facilities</h4>
+                <p class="venue-desc">Club facilities include both water and land practice ranges, an indoor tennis
+                    hall, a hotel, villa guest rooms, and a 7,000-square-meter clubhouse building. The clubhouse is
+                    conveniently located near the 9th and 18th greens of both courses. Interior facilities include
+                    Chinese and Western restaurants, an open-air tea pavilion, steam saunas, hot and cold massage rooms,
+                    a fitness center, as well as a multi-function banquet hall and private VIP rooms.The course also
+                    features a 9-hole lighted night course that encircles the mountaintop, composed of different greens
+                    and fairways from the back 18 holes, offering a truly distinctive experience.</p>
+            </div>
+
+            <!-- 场地3 -->
+            <div class="tab-content" id="venue3">
+                <h3 class="venue-title">Shenzhen Noble Merchant Golf Club</h3>
+                <img src="/src/nobleMerchant.png" class="venue-img" ondblclick="openModal(this)"
+                    alt="Noble Merchant Golf">
+
+                <ul class="venue-feature-list">
+                    <li>DOWNTOWN SHENZHEN LOCATION</li>
+                    <li>18-HOLE PROFESSIONAL NIGHT COURSE</li>
+                    <li>CASTLE-STYLE CLUBHOUSE</li>
+                    <li>STATE BANQUET CUISINE SERVICE</li>
+                </ul>
+
+                <h4 class="desc-title">Course Overview</h4>
+                <p class="venue-desc">Shenzhen Noble Merchant Golf Club is a standard 18-hole lighted golf course,
+                    conveniently located in the heart of Shenzhen along Shennan Avenue. Opened in 1996, the course
+                    covers approximately 500,000 square meters with gently rolling fairways and pleasant surroundings.
+                    Total length is 5,968 yards, par 72, designed by Australian architect Les Watts. For busy golfers,
+                    the club's greatest value lies in its night-optimized design - a comprehensive lighting system
+                    covers every fairway and green, providing ample brightness without casting distracting shadows
+                    during your swing.</p>
+
+                <h4 class="desc-title">Night Golf Highlights</h4>
+                <p class="venue-desc">The night course at Noble Merchant is not merely “adding lights” – the night
+                    experience was considered from the very beginning of the design. The lighting system is carefully
+                    arranged to be even and gentle, allowing you to clearly see fairway undulations, green contours, and
+                    the edges of water hazards. The back nine holes are especially impressive at night – the long, wide
+                    fairways take on a dramatic appearance under the lights, complemented by well designed greens and
+                    bunkers, allowing both professional and amateur golfers to appreciate the unique charm of night
+                    golf. The 7th hole is a classic on the night course: a 132 yard par 3 with the green completely
+                    surrounded by water and bunkers front and back. The lights reflect off the water, creating a
+                    striking visual effect and offering a severe test of distance and accuracy. After finishing 18
+                    holes, you can dine or relax in the castle style clubhouse without feeling rushed.</p>
+
+                <h4 class="desc-title">Clubhouse & Facilities</h4>
+                <p class="venue-desc">The castle style clubhouse, designed by Britain‘s PMJM, looks especially elegant
+                    under the night lights. Facilities include deluxe suites, Chinese and Western restaurants, a bar, a
+                    fitness center, and a golf shop. The driving range also offers night service with professional
+                    instructors. A lighted standard tennis court is also available. Notably, the Noble Merchant State
+                    Banquet Hall specializes in state banquet cuisine, perfect for entertaining or rewarding yourself
+                    after a round. In short, this club is designed for “a relaxed round after work.”</p>
+            </div>
+        </div>
+
+        <!-- ======================
+             4. 标语模块
+        ====================== -->
+        <div class="cta-section">
+            <h2 class="cta-slogan">Secure Your Tour Now!</h2>
+        </div>
+
+        <!-- 底部版权 -->
+        <div class="footer">
+            All Rights Reserved @Johnson
+        </div>
+    </div>
+
+    <!-- 固定底部注册按钮 -->
+    <button class="fixed-register-btn " onclick="window.location.href='https://forms.gle/F1zRAQXHWaPdkkgV9';">REGISTER
+        NOW</button>
+
+    <!-- 图片弹窗 -->
+    <div class="modal" id="imageModal">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <img id="modalImage">
+    </div>
+
+    <script>
+        // 标签切换功能
+        const allTabs = document.querySelectorAll('.tab-btn');
+        allTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const parentTabs = tab.closest('.tabs');
+                const targetId = tab.dataset.target;
+                parentTabs.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                parentTabs.closest('.module-card').querySelectorAll('.tab-content').forEach(c => c
+                    .classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        // 图片双击放大弹窗
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+
+        function openModal(imgElement) {
+            modal.style.display = 'flex';
+            modalImg.src = imgElement.src;
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        modal.onclick = function (e) {
+            if (e.target === modal) closeModal();
+        }
+    </script>
+</body>
+
+</html>
